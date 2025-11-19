@@ -1,0 +1,60 @@
+código banco de dados MySQL
+
+create DATABASE SensorTemperatura;
+use SensorTemperatura;
+
+create table valores (
+id INT auto_increment primary key, 
+valor VARCHAR(50),
+data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    
+);
+
+select * from valores; 
+
+-----------------------------------------------------------------------------------------------
+código conexão banco de dados + código python
+
+import mysql.connector
+from paho.mqtt import client as mqtt
+
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="XXXX",
+    database="sensortemperatura"
+)
+
+cursor = db.cursor()
+
+broker = "XXX"
+port = 8883
+username = "XXX"
+password = "XXXX"
+
+topic = "sensor/temperatura"
+
+def on_message(client, userdata, msg):
+    valor = msg.payload.decode()
+    print("MQTT Recebido:", valor)
+
+    # SALVAR NO BANCO
+    sql = "INSERT INTO temperatura (valor) VALUES (%s);"
+    cursor.execute(sql, (valor,))
+    db.commit()
+
+client = mqtt.Client()
+client.username_pw_set(username, password)
+client.tls_set() 
+
+client.on_message = on_message
+
+client.connect(broker, port)
+client.subscribe(topic)
+
+print("Aguardando mensagens...")
+client.loop_forever()
+
+  
+
+
